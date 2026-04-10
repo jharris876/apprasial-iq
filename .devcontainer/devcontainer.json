@@ -1,0 +1,30 @@
+{
+  "name": "AppraisalIQ Dev",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    }
+  },
+  "forwardPorts": [8000, 5432],
+  "portsAttributes": {
+    "8000": { "label": "Backend API", "onAutoForward": "notify" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" }
+  },
+  "postCreateCommand": "pip install -r backend/requirements.txt && bash .devcontainer/setup.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg"
+      ]
+    }
+  },
+  "remoteEnv": {
+    "DATABASE_URL": "postgresql+asyncpg://appraisaliq:devpassword@localhost:5432/appraisaliq",
+    "ENVIRONMENT": "development",
+    "CORS_ORIGINS": "http://localhost:8000"
+  }
+}
