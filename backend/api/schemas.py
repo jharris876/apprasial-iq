@@ -8,14 +8,14 @@ import uuid
 # ── Auth ───────────────────────────────────────────────────────────────────────
 
 class UserRegister(BaseModel):
-    email: EmailStr
+    email: str
     full_name: str = Field(min_length=2, max_length=100)
     password: str = Field(min_length=8)
     company: Optional[str] = None
     license_number: Optional[str] = None
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class TokenResponse(BaseModel):
