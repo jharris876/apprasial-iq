@@ -196,7 +196,7 @@ class AuditLog(Base):
     user_id:    Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"))
     event:      Mapped[str]            = mapped_column(Text, nullable=False)
     rule_ref:   Mapped[str | None]     = mapped_column(String)
-    metadata:   Mapped[dict | None]    = mapped_column(JSONB)
+    meta_data:  Mapped[dict | None]    = mapped_column(JSONB)
     ip_address: Mapped[str | None]     = mapped_column(String)
     created_at: Mapped[datetime]       = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 

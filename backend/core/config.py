@@ -26,7 +26,7 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
     # File uploads
-    UPLOAD_DIR: str = "/app/uploads"
+    UPLOAD_DIR: str = "./uploads"
     MAX_FILE_SIZE_MB: int = 50
 
     @property
@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()
