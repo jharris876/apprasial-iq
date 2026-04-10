@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AppraisalIQ — Professional Review Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #0D1B2A; --navy-mid: #1A2E42; --navy-light: #243B53;
+  --gold: #C9A84C; --gold-light: #E8C76A; --gold-pale: #F5EDD4;
+  --cream: #FAF7F2; --cream-dark: #F0EBE0;
+  --slate: #4A5568; --slate-light: #718096;
+  --red-flag: #C0392B; --red-pale: #FEF2F0;
+  --amber-flag: #D97706; --amber-pale: #FFFBEB;
+  --green-flag: #059669; --green-pale: #ECFDF5;
+  --border: rgba(13,27,42,0.12);
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--navy); min-height: 100vh; }
+
+/* HEADER */
+.header { background: var(--navy); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+.logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.logo-mark { width: 28px; height: 28px; background: var(--gold); display: flex; align-items: center; justify-content: center; }
+.logo-text { font-family: 'Libre Baskerville', serif; color: #fff; font-size: 16px; }
+.logo-text span { color: var(--gold); }
+.header-nav { display: flex; gap: 24px; }
+.header-nav a { color: rgba(255,255,255,0.55); font-size: 13px; text-decoration: none; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; transition: color 0.15s; }
+.header-nav a.active, .header-nav a:hover { color: var(--gold); }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.badge { background: var(--gold); color: var(--navy); font-size: 10px; font-weight: 600; padding: 3px 8px; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
+.user-pill { color: rgba(255,255,255,0.7); font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.btn-logout { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 4px 10px; font-size: 11px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.04em; transition: all 0.15s; }
+.btn-logout:hover { border-color: var(--gold); color: var(--gold); }
+
+/* APP LAYOUT */
+.app { display: flex; min-height: calc(100vh - 56px); }
+.sidebar { width: 220px; background: var(--navy-mid); padding: 1.5rem 0; flex-shrink: 0; }
+.sidebar-section { padding: 0 1rem 1.5rem; }
+.sidebar-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; padding: 0 0.5rem; margin-bottom: 8px; }
+.sidebar-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 3px; cursor: pointer; transition: background 0.15s; font-size: 13px; color: rgba(255,255,255,0.6); }
+.sidebar-item:hover, .sidebar-item.active { background: rgba(201,168,76,0.15); color: var(--gold-light); }
+.sidebar-item .count { margin-left: auto; background: var(--red-flag); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 10px; font-family: 'IBM Plex Mono', monospace; }
+.sidebar-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 0.5rem 1rem 1rem; }
+.main { flex: 1; padding: 2rem; overflow-y: auto; max-width: 1200px; }
+
+/* SCREENS */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* TYPOGRAPHY */
+.page-title { font-family: 'Libre Baskerville', serif; font-size: 22px; margin-bottom: 4px; }
+.page-subtitle { font-size: 13px; color: var(--slate-light); margin-bottom: 2rem; }
+
+/* CARDS */
+.card { background: #fff; border: 0.5px solid var(--border); padding: 1.5rem; margin-bottom: 1rem; }
+.card-title { font-family: 'Libre Baskerville', serif; font-size: 15px; margin-bottom: 1rem; }
+
+/* GRIDS */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+
+/* METRIC CARDS */
+.metric { background: var(--navy); padding: 1.25rem 1.5rem; }
+.metric-label { font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 0.08em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; margin-bottom: 6px; }
+.metric-value { font-size: 28px; font-weight: 300; color: #fff; font-family: 'Libre Baskerville', serif; }
+.metric.red .metric-value { color: #F87171; }
+.metric.amber .metric-value { color: #FCD34D; }
+.metric.green .metric-value { color: #6EE7B7; }
+
+/* BUTTONS */
+.btn-primary { background: var(--navy); color: var(--gold-light); border: none; padding: 10px 24px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; font-weight: 500; transition: background 0.15s; }
+.btn-primary:hover { background: var(--navy-light); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: transparent; color: var(--navy); border: 1px solid var(--border); padding: 10px 24px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+.btn-secondary:hover { background: var(--cream-dark); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+
+/* FORM ELEMENTS */
+.text-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); background: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--navy); outline: none; }
+.text-input:focus { border-color: var(--gold); }
+textarea.text-input { resize: vertical; min-height: 180px; }
+.form-label { font-size: 12px; color: var(--slate-light); text-transform: uppercase; letter-spacing: 0.06em; font-family: 'IBM Plex Mono', monospace; display: block; margin-bottom: 6px; }
+.form-group { margin-bottom: 1.25rem; }
+select.text-input { cursor: pointer; }
+
+/* UPLOAD */
+.upload-zone { border: 1.5px dashed var(--gold); background: var(--cream-dark); padding: 2.5rem 2rem; text-align: center; cursor: pointer; transition: background 0.2s; position: relative; }
+.upload-zone:hover { background: var(--gold-pale); }
+.upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-icon { width: 44px; height: 44px; background: var(--navy); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; }
+.format-pill { display: inline-block; background: var(--navy); color: var(--gold-light); font-size: 11px; padding: 3px 10px; font-family: 'IBM Plex Mono', monospace; margin: 2px; }
+
+/* TABS */
+.tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+.tab { padding: 10px 18px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--slate-light); transition: all 0.15s; margin-bottom: -1px; }
+.tab.active { border-bottom-color: var(--gold); color: var(--navy); font-weight: 500; }
+
+/* FILTER BAR */
+.filter-bar { display: flex; gap: 8px; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap; }
+.filter-btn { padding: 6px 14px; font-size: 12px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-family: 'IBM Plex Mono', monospace; transition: all 0.15s; color: var(--slate); }
+.filter-btn:hover { background: var(--cream-dark); }
+.filter-btn.active { background: var(--navy); color: var(--gold-light); border-color: var(--navy); }
+.filter-label { font-size: 12px; color: var(--slate-light); }
+
+/* ISSUES */
+.issue-item { background: #fff; border: 0.5px solid var(--border); margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+.issue-item:hover { border-color: var(--gold); }
+.issue-header { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; }
+.severity-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; white-space: nowrap; flex-shrink: 0; margin-top: 1px; }
+.sev-critical { background: var(--red-flag); color: #fff; }
+.sev-major { background: var(--amber-flag); color: #fff; }
+.sev-minor { background: #6B7280; color: #fff; }
+.sev-info { background: var(--navy); color: var(--gold-light); }
+.issue-content { flex: 1; min-width: 0; }
+.issue-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+.issue-meta { font-size: 12px; color: var(--slate-light); font-family: 'IBM Plex Mono', monospace; }
+.issue-chevron { color: var(--slate-light); font-size: 18px; flex-shrink: 0; transition: transform 0.2s; }
+.issue-item.expanded .issue-chevron { transform: rotate(90deg); }
+.issue-detail { display: none; padding: 0 16px 16px; border-top: 1px solid var(--cream-dark); }
+.issue-item.expanded .issue-detail { display: block; }
+.detail-section { margin-top: 12px; }
+.detail-label { font-size: 11px; color: var(--slate-light); text-transform: uppercase; letter-spacing: 0.08em; font-family: 'IBM Plex Mono', monospace; margin-bottom: 4px; }
+.detail-text { font-size: 13px; color: var(--slate); line-height: 1.65; }
+.detail-code { background: var(--cream-dark); padding: 10px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--navy-mid); border-left: 2px solid var(--gold); margin-top: 6px; white-space: pre-wrap; }
+.correction-box { background: var(--green-pale); border-left: 3px solid var(--green-flag); padding: 10px 12px; font-size: 13px; color: #065F46; margin-top: 6px; line-height: 1.6; }
+.feedback-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.fb-btn { padding: 5px 12px; font-size: 11px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-family: 'IBM Plex Mono', monospace; color: var(--slate); transition: all 0.15s; }
+.fb-btn:hover { border-color: var(--navy); color: var(--navy); }
+.fb-btn.confirmed { background: var(--green-pale); border-color: var(--green-flag); color: var(--green-flag); }
+.fb-btn.dismissed { background: var(--cream-dark); color: var(--slate-light); }
+.fb-btn.corrected { background: #EFF6FF; border-color: #3B82F6; color: #1D4ED8; }
+
+/* SCORE RING */
+.score-ring-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.score-ring { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
+.score-ring svg { transform: rotate(-90deg); }
+.score-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.score-num { font-family: 'Libre Baskerville', serif; font-size: 24px; }
+.score-label { font-size: 9px; color: var(--slate-light); letter-spacing: 0.08em; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; }
+.score-grade { font-family: 'Libre Baskerville', serif; font-size: 26px; margin-bottom: 4px; }
+.score-grade.fail { color: var(--red-flag); }
+.score-grade.warn { color: var(--amber-flag); }
+.score-grade.pass { color: var(--green-flag); }
+
+/* REPORT INFO GRID */
+.report-info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 1px; background: var(--border); border: 0.5px solid var(--border); margin-bottom: 1.5rem; }
+.info-cell { background: #fff; padding: 12px 16px; }
+.info-cell-label { font-size: 11px; color: var(--slate-light); text-transform: uppercase; letter-spacing: 0.06em; font-family: 'IBM Plex Mono', monospace; margin-bottom: 3px; }
+.info-cell-value { font-size: 14px; font-weight: 500; }
+
+/* PROCESSING */
+.processing-card { background: var(--navy); color: #fff; padding: 2rem; margin-bottom: 1rem; }
+.progress-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.55); margin-bottom: 8px; letter-spacing: 0.08em; }
+.progress-bar { height: 3px; background: rgba(255,255,255,0.1); }
+.progress-fill { height: 100%; background: var(--gold); transition: width 0.5s ease; }
+.progress-steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 6px; margin-top: 1.5rem; }
+.progress-step { padding: 8px 10px; border: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'IBM Plex Mono', monospace; }
+.progress-step.done { border-color: var(--gold); color: var(--gold-light); }
+.progress-step.active { border-color: rgba(255,255,255,0.4); color: #fff; }
+
+/* MATH TABLE */
+.math-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: 'IBM Plex Mono', monospace; }
+.math-table th { background: var(--navy); color: var(--gold-light); padding: 9px 10px; text-align: left; font-weight: 500; }
+.math-table th:not(:first-child) { text-align: right; }
+.math-table td { padding: 8px 10px; border-bottom: 1px solid var(--cream-dark); }
+.math-table td:not(:first-child) { text-align: right; }
+.math-table tr:nth-child(even) td { background: var(--cream); }
+
+/* REPORTS LIST */
+.report-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; border: 0.5px solid var(--border); margin-bottom: 6px; cursor: pointer; transition: border-color 0.15s; }
+.report-row:hover { border-color: var(--gold); }
+.report-row-info { flex: 1; min-width: 0; }
+.report-row-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.report-row-meta { font-size: 12px; color: var(--slate-light); font-family: 'IBM Plex Mono', monospace; margin-top: 2px; }
+.report-row-score { font-family: 'Libre Baskerville', serif; font-size: 22px; min-width: 48px; text-align: right; }
+.status-pill { font-size: 10px; padding: 3px 8px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+.status-complete { background: var(--green-pale); color: var(--green-flag); }
+.status-processing { background: var(--amber-pale); color: var(--amber-flag); }
+.status-queued { background: var(--cream-dark); color: var(--slate-light); }
+.status-failed { background: var(--red-pale); color: var(--red-flag); }
+
+/* AUTH */
+.auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--navy); }
+.auth-box { background: var(--cream); width: 420px; padding: 2.5rem; }
+.auth-logo { text-align: center; margin-bottom: 2rem; }
+.auth-logo .logo-text { font-family: 'Libre Baskerville', serif; font-size: 24px; color: var(--navy); }
+.auth-logo .logo-text span { color: var(--gold); }
+.auth-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+.auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px; color: var(--slate-light); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.auth-tab.active { border-bottom-color: var(--gold); color: var(--navy); font-weight: 500; }
+
+/* SPINNER */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(201,168,76,0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* AUDIT */
+.audit-row { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--cream-dark); font-size: 12px; }
+.audit-time { color: var(--slate-light); font-family: 'IBM Plex Mono', monospace; white-space: nowrap; min-width: 80px; }
+.audit-event { color: var(--slate); flex: 1; }
+.audit-rule { color: var(--navy); font-family: 'IBM Plex Mono', monospace; font-size: 11px; white-space: nowrap; }
+
+/* MISC */
+hr { border: none; border-top: 1px solid var(--cream-dark); margin: 1.5rem 0; }
+.empty-state { text-align: center; padding: 3rem; color: var(--slate-light); font-size: 14px; }
+.error-banner { background: var(--red-pale); border-left: 3px solid var(--red-flag); padding: 12px 16px; font-size: 13px; color: var(--red-flag); margin-bottom: 1rem; }
+.success-banner { background: var(--green-pale); border-left: 3px solid var(--green-flag); padding: 12px 16px; font-size: 13px; color: #065F46; margin-bottom: 1rem; }
+.divider-text { display: flex; align-items: center; gap: 12px; margin: 1.25rem 0; }
+.divider-text span { font-size: 11px; color: var(--slate-light); font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
+.divider-text::before, .divider-text::after { content: ''; flex: 1; height: 1px; background: var(--cream-dark); }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════ AUTH SCREEN -->
+<div id="authScreen" class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="logo-text">Appraisal<span>IQ</span></div>
+      <div style="font-size: 12px; color: var(--slate-light); margin-top: 4px; font-family: 'IBM Plex Mono', monospace;">USPAP 2024 · Fannie Mae · Freddie Mac</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
+      <div class="auth-tab" onclick="switchAuthTab('register')">Create Account</div>
+    </div>
+    <div id="authError" class="error-banner" style="display:none;"></div>
+
+    <!-- Login -->
+    <div id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="loginEmail" class="text-input" placeholder="you@firm.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="loginPassword" class="text-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-primary" style="width:100%;" onclick="doLogin()">Sign In</button>
+      <div style="margin-top: 1rem; font-size: 12px; color: var(--slate-light); text-align: center;">
+        Default admin: admin@appraisaliq.local / AdminPass1!
+      </div>
+    </div>
+
+    <!-- Register -->
+    <div id="registerForm" style="display:none;">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="regName" class="text-input" placeholder="Jane Smith MAI">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="regEmail" class="text-input" placeholder="you@firm.com">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Company</label>
+          <input type="text" id="regCompany" class="text-input" placeholder="Smith Appraisal Group">
+        </div>
+        <div class="form-group">
+          <label class="form-label">License #</label>
+          <input type="text" id="regLicense" class="text-input" placeholder="Optional">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="regPassword" class="text-input" placeholder="Min 8 characters">
+      </div>
+      <button class="btn-primary" style="width:100%;" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ MAIN APP -->
+<div id="mainApp" style="display:none;">
+
+  <header class="header">
+    <div class="logo" onclick="showSection('dashboard')">
+      <div class="logo-mark">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="1" width="6" height="6" fill="white"/>
+          <rect x="9" y="1" width="6" height="6" fill="white" opacity="0.5"/>
+          <rect x="1" y="9" width="6" height="6" fill="white" opacity="0.5"/>
+          <rect x="9" y="9" width="6" height="6" fill="white" opacity="0.8"/>
+        </svg>
+      </div>
+      <span class="logo-text">Appraisal<span>IQ</span></span>
+    </div>
+    <nav class="header-nav">
+      <a id="nav-dashboard" class="active" onclick="showSection('dashboard')">Dashboard</a>
+      <a id="nav-upload" onclick="showSection('upload')">New Review</a>
+      <a id="nav-reports" onclick="showSection('reports')">All Reviews</a>
+    </nav>
+    <div class="header-right">
+      <div class="badge">USPAP 2024</div>
+      <div class="user-pill">
+        <span id="headerUserName"></span>
+        <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Workspace</div>
+        <div class="sidebar-item" onclick="showSection('dashboard')">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="5" height="5"/><rect x="8" y="1" width="5" height="5" opacity="0.6"/><rect x="1" y="8" width="5" height="5" opacity="0.6"/><rect x="8" y="8" width="5" height="5" opacity="0.4"/></svg>
+          Dashboard
+        </div>
+        <div class="sidebar-item" onclick="showSection('upload')">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1L1 7h3v6h6V7h3L7 1z"/></svg>
+          New Review
+        </div>
+        <div class="sidebar-item" onclick="showSection('reports')">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="12" height="12" rx="1"/><path d="M4 7h6M4 4h6M4 10h4"/></svg>
+          All Reviews
+        </div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section" id="sidebarSectionNav" style="display:none;">
+        <div class="sidebar-label">Active Report</div>
+        <div class="sidebar-item" onclick="filterBySection('all')">All Issues</div>
+        <div class="sidebar-item" onclick="filterBySection('uspap')">USPAP</div>
+        <div class="sidebar-item" onclick="filterBySection('math')">Math Validation</div>
+        <div class="sidebar-item" onclick="filterBySection('narrative')">Narrative</div>
+        <div class="sidebar-item" onclick="filterBySection('comps')">Comparables</div>
+        <div class="sidebar-item" onclick="filterBySection('adjustments')">Adjustments</div>
+        <div class="sidebar-item" onclick="filterBySection('income')">Income Approach</div>
+        <div class="sidebar-item" onclick="filterBySection('hbu')">HBU Analysis</div>
+        <div class="sidebar-item" onclick="filterBySection('reconciliation')">Reconciliation</div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Standards</div>
+        <div class="sidebar-item" style="font-size:11px; color: var(--gold-light); cursor:default;">✓ USPAP 2024</div>
+        <div class="sidebar-item" style="font-size:11px; color: var(--gold-light); cursor:default;">✓ Fannie Mae B4-1</div>
+        <div class="sidebar-item" style="font-size:11px; color: var(--gold-light); cursor:default;">✓ Freddie Mac 5601</div>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <!-- DASHBOARD -->
+      <div id="section-dashboard" class="screen active">
+        <p class="page-title">Review Dashboard</p>
+        <p class="page-subtitle">Welcome back. Here's an overview of your review activity.</p>
+        <div class="grid-4" id="dashboardMetrics">
+          <div class="metric"><div class="metric-label">Total Reviews</div><div class="metric-value" id="metricTotal">—</div></div>
+          <div class="metric red"><div class="metric-label">Avg Score</div><div class="metric-value" id="metricScore">—</div></div>
+          <div class="metric amber"><div class="metric-label">Critical Issues</div><div class="metric-value" id="metricCritical">—</div></div>
+          <div class="metric green"><div class="metric-label">Complete</div><div class="metric-value" id="metricComplete">—</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent Reviews</div>
+          <div id="dashboardRecentList"><div class="empty-state">No reviews yet. <a href="#" onclick="showSection('upload')" style="color:var(--gold);">Upload your first report →</a></div></div>
+        </div>
+      </div>
+
+      <!-- UPLOAD -->
+      <div id="section-upload" class="screen">
+        <p class="page-title">New Appraisal Review</p>
+        <p class="page-subtitle">Upload a report or paste text for automated USPAP and secondary market compliance analysis.</p>
+
+        <div id="uploadError" class="error-banner" style="display:none;"></div>
+
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" onchange="handleFileSelected(event)">
+          <div class="upload-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="white" stroke-width="1.5"><path d="M19 14v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M15 7l-4-4-4 4M11 3v11"/></svg>
+          </div>
+          <p style="font-family:'Libre Baskerville',serif; font-size:15px; margin-bottom:6px;">Drop Appraisal Report Here</p>
+          <p style="font-size:13px; color:var(--slate-light); margin-bottom:1rem;">PDF, DOCX, or TXT — up to 50MB</p>
+          <div>
+            <span class="format-pill">PDF</span>
+            <span class="format-pill">DOCX</span>
+            <span class="format-pill">FORM 1004</span>
+            <span class="format-pill">NARRATIVE</span>
+          </div>
+        </div>
+        <div id="selectedFileInfo" style="display:none; margin-top:8px; font-size:12px; color:var(--slate-light); font-family:'IBM Plex Mono',monospace; padding: 8px 12px; background:#fff; border:0.5px solid var(--border);"></div>
+
+        <div class="divider-text"><span>OR PASTE REPORT TEXT</span></div>
+
+        <textarea id="pastedText" class="text-input" placeholder="Paste full appraisal report text here..."></textarea>
+
+        <div style="display:flex; gap:12px; margin-top:1rem; align-items:center; flex-wrap:wrap;">
+          <button class="btn-primary" onclick="submitReport()" id="submitBtn">Run Appraisal Review</button>
+          <button class="btn-secondary" onclick="loadSample()">Load Sample Report</button>
+          <div style="margin-left:auto; display:flex; gap:8px;">
+            <select id="reportType" class="text-input" style="width:auto;">
+              <option value="commercial">Commercial</option>
+              <option value="residential">Residential (URAR)</option>
+              <option value="multifamily">Multi-Family</option>
+              <option value="land">Land / Vacant</option>
+              <option value="industrial">Industrial</option>
+              <option value="retail">Retail</option>
+              <option value="office">Office</option>
+            </select>
+            <select id="reviewStandard" class="text-input" style="width:auto;">
+              <option value="all">All Standards</option>
+              <option value="uspap">USPAP Only</option>
+              <option value="fannie">Fannie Mae</option>
+              <option value="freddie">Freddie Mac</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROCESSING -->
+      <div id="section-processing" class="screen">
+        <p class="page-title">Analyzing Report</p>
+        <p class="page-subtitle" id="processingFilename">Running compliance review...</p>
+        <div class="processing-card">
+          <div class="progress-label" id="progressLabel">INITIALIZING</div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+          <div class="progress-steps" id="progressSteps"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Live Engine Output</div>
+          <div id="liveOutput" style="font-size:13px; color:var(--slate); font-family:'IBM Plex Mono',monospace; line-height:1.7;">
+            <span class="spinner"></span> Connecting to review engine...
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div id="section-results" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <p class="page-title" id="resultTitle">Review Complete</p>
+            <p class="page-subtitle" id="resultSubtitle"></p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-secondary btn-sm" onclick="rerunReview()">Re-Run Review</button>
+            <button class="btn-secondary btn-sm" onclick="showSection('reports')">← All Reviews</button>
+            <button class="btn-primary btn-sm" onclick="exportTxt()">Export Report</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="score-ring-wrap">
+            <div class="score-ring">
+              <svg width="96" height="96" viewBox="0 0 96 96">
+                <circle cx="48" cy="48" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                <circle cx="48" cy="48" r="40" fill="none" stroke="#C0392B" stroke-width="8"
+                  stroke-dasharray="251" stroke-dashoffset="63" id="scoreCircle" stroke-linecap="round"/>
+              </svg>
+              <div class="score-center">
+                <span class="score-num" id="scoreNum">--</span>
+                <span class="score-label">Score</span>
+              </div>
+            </div>
+            <div style="flex:1;">
+              <div class="score-grade fail" id="scoreGrade">Review Required</div>
+              <div style="font-size:13px; color:var(--slate); margin-top:4px;" id="scoreDesc"></div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(3,auto); gap:1.5rem;">
+              <div style="text-align:center;">
+                <div style="font-family:'Libre Baskerville',serif; font-size:22px; color:var(--red-flag);" id="cntCritical">0</div>
+                <div style="font-size:11px; color:var(--slate-light); font-family:'IBM Plex Mono',monospace;">Critical</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-family:'Libre Baskerville',serif; font-size:22px; color:var(--amber-flag);" id="cntMajor">0</div>
+                <div style="font-size:11px; color:var(--slate-light); font-family:'IBM Plex Mono',monospace;">Major</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-family:'Libre Baskerville',serif; font-size:22px; color:var(--slate);" id="cntMinor">0</div>
+                <div style="font-size:11px; color:var(--slate-light); font-family:'IBM Plex Mono',monospace;">Minor</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="report-info-grid" id="reportInfoGrid"></div>
+
+        <div class="tabs">
+          <div class="tab active" onclick="switchResultTab('issues',this)">Flagged Issues</div>
+          <div class="tab" onclick="switchResultTab('summary',this)">Review Summary</div>
+          <div class="tab" onclick="switchResultTab('math',this)">Math Checks</div>
+          <div class="tab" onclick="switchResultTab('audit',this)">Audit Log</div>
+        </div>
+
+        <!-- Issues Tab -->
+        <div id="rtab-issues">
+          <div class="filter-bar">
+            <span class="filter-label">Severity:</span>
+            <button class="filter-btn active" onclick="filterSeverity('all',this)">All</button>
+            <button class="filter-btn" onclick="filterSeverity('critical',this)">Critical</button>
+            <button class="filter-btn" onclick="filterSeverity('major',this)">Major</button>
+            <button class="filter-btn" onclick="filterSeverity('minor',this)">Minor</button>
+            <button class="filter-btn" onclick="filterSeverity('info',this)">Info</button>
+          </div>
+          <div id="issuesList"></div>
+        </div>
+
+        <!-- Summary Tab -->
+        <div id="rtab-summary" style="display:none;">
+          <div class="card">
+            <div class="card-title">Professional Review Summary</div>
+            <div id="summaryContent" style="font-size:13px; line-height:1.8; color:var(--slate);"></div>
+          </div>
+        </div>
+
+        <!-- Math Tab -->
+        <div id="rtab-math" style="display:none;">
+          <div class="card">
+            <div class="card-title">Mathematical Verification</div>
+            <div id="mathContent"></div>
+          </div>
+        </div>
+
+        <!-- Audit Tab -->
+        <div id="rtab-audit" style="display:none;">
+          <div class="card">
+            <div class="card-title">Audit Trail</div>
+            <div id="auditContent"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALL REPORTS -->
+      <div id="section-reports" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+          <div>
+            <p class="page-title">All Reviews</p>
+            <p class="page-subtitle" style="margin:0;">Your complete appraisal review history.</p>
+          </div>
+          <button class="btn-primary btn-sm" onclick="showSection('upload')">+ New Review</button>
+        </div>
+        <div id="reportsList"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════════════════
+
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8000/api/v1'
+  : '/api/v1';
+
+let authToken = localStorage.getItem('aiq_token');
+let currentUser = JSON.parse(localStorage.getItem('aiq_user') || 'null');
+let currentReportId = null;
+let currentIssues = [];
+let currentSeverityFilter = 'all';
+let currentSectionFilter = 'all';
+
+const STEPS = [
+  'Document parsing','USPAP Ethics Rule','Scope of Work','Standards 1 & 2',
+  'Math recalculation','Cross-section check','Comparable sales','Adjustment grid',
+  'Income approach','HBU analysis','Narrative review','Secondary market','Reconciliation','Generating report'
+];
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+
+window.onload = () => {
+  if (authToken && currentUser) {
+    showApp();
+  }
+};
+
+function showApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = '';
+  document.getElementById('headerUserName').textContent = currentUser.full_name;
+  loadDashboard();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════════════════════
+
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.auth-tab')[tab === 'login' ? 0 : 1].classList.add('active');
+  document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('authError').style.display = 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) return showAuthError('Please enter email and password.');
+  try {
+    const res = await apiFetch('/auth/login', 'POST', { email, password }, false);
+    saveAuth(res);
+    showApp();
+  } catch(e) { showAuthError(e.message); }
+}
+
+async function doRegister() {
+  const body = {
+    full_name: document.getElementById('regName').value.trim(),
+    email: document.getElementById('regEmail').value.trim(),
+    password: document.getElementById('regPassword').value,
+    company: document.getElementById('regCompany').value.trim() || null,
+    license_number: document.getElementById('regLicense').value.trim() || null,
+  };
+  if (!body.full_name || !body.email || !body.password) return showAuthError('Name, email, and password are required.');
+  if (body.password.length < 8) return showAuthError('Password must be at least 8 characters.');
+  try {
+    const res = await apiFetch('/auth/register', 'POST', body, false);
+    saveAuth(res);
+    showApp();
+  } catch(e) { showAuthError(e.message); }
+}
+
+function saveAuth(data) {
+  authToken = data.access_token;
+  currentUser = { user_id: data.user_id, email: data.email, full_name: data.full_name, is_admin: data.is_admin };
+  localStorage.setItem('aiq_token', authToken);
+  localStorage.setItem('aiq_user', JSON.stringify(currentUser));
+}
+
+function doLogout() {
+  localStorage.removeItem('aiq_token');
+  localStorage.removeItem('aiq_user');
+  authToken = null; currentUser = null;
+  document.getElementById('authScreen').style.display = '';
+  document.getElementById('mainApp').style.display = 'none';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('authError');
+  el.textContent = msg;
+  el.style.display = '';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════════════════════
+
+function showSection(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.querySelectorAll('.header-nav a').forEach(a => a.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
+  document.getElementById('sidebarSectionNav').style.display = name === 'results' ? '' : 'none';
+  if (name === 'reports') loadReportsList();
+  if (name === 'dashboard') loadDashboard();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function loadDashboard() {
+  try {
+    const reports = await apiFetch('/reports?limit=5');
+    document.getElementById('metricTotal').textContent = reports.length;
+    const complete = reports.filter(r => r.status === 'complete');
+    document.getElementById('metricComplete').textContent = complete.length;
+    const scores = complete.filter(r => r.score != null).map(r => r.score);
+    document.getElementById('metricScore').textContent = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : '—';
+    const critical = reports.reduce((s,r) => s + (r.critical_count||0), 0);
+    document.getElementById('metricCritical').textContent = critical;
+
+    const list = document.getElementById('dashboardRecentList');
+    if (reports.length === 0) {
+      list.innerHTML = '<div class="empty-state">No reviews yet. <a href="#" onclick="showSection(\'upload\')" style="color:var(--gold);">Upload your first report →</a></div>';
+    } else {
+      list.innerHTML = reports.map(r => reportRowHTML(r)).join('');
+    }
+  } catch(e) { console.error(e); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// UPLOAD & SUBMIT
+// ══════════════════════════════════════════════════════════════════════════════
+
+let selectedFile = null;
+
+function handleFileSelected(e) {
+  selectedFile = e.target.files[0];
+  if (!selectedFile) return;
+  const info = document.getElementById('selectedFileInfo');
+  info.textContent = `Selected: ${selectedFile.name} (${(selectedFile.size/1024/1024).toFixed(2)} MB)`;
+  info.style.display = '';
+}
+
+async function submitReport() {
+  const text = document.getElementById('pastedText').value.trim();
+  const reportType = document.getElementById('reportType').value;
+  const reviewStandard = document.getElementById('reviewStandard').value;
+
+  if (!selectedFile && !text) {
+    showUploadError('Please upload a file or paste report text.');
+    return;
+  }
+
+  document.getElementById('uploadError').style.display = 'none';
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitBtn').innerHTML = '<span class="spinner"></span> Uploading...';
+
+  try {
+    const fd = new FormData();
+    if (selectedFile) fd.append('file', selectedFile);
+    if (text) fd.append('report_text', text);
+    fd.append('report_type', reportType);
+    fd.append('review_standard', reviewStandard);
+
+    const res = await fetch(`${API}/reports/upload`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authToken}` },
+      body: fd,
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Upload failed');
+    }
+    const data = await res.json();
+    currentReportId = data.report_id;
+
+    // Reset upload form
+    selectedFile = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('selectedFileInfo').style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = 'Run Appraisal Review';
+
+    startReviewStream(currentReportId, selectedFile?.name || 'Pasted Report');
+  } catch(e) {
+    showUploadError(e.message);
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = 'Run Appraisal Review';
+  }
+}
+
+function showUploadError(msg) {
+  const el = document.getElementById('uploadError');
+  el.textContent = msg;
+  el.style.display = '';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// STREAMING REVIEW
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function startReviewStream(reportId, filename) {
+  showSection('processing');
+  document.getElementById('processingFilename').textContent = `Analyzing: ${filename}`;
+
+  let stepIdx = 0;
+  const stepsEl = document.getElementById('progressSteps');
+  stepsEl.innerHTML = STEPS.map((s,i) => `<div class="progress-step" id="pstep-${i}">${s}</div>`).join('');
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('liveOutput').innerHTML = '<span class="spinner"></span> Starting review engine...';
+
+  const stepTimer = setInterval(() => {
+    if (stepIdx < STEPS.length - 1) {
+      document.getElementById('pstep-' + stepIdx)?.classList.replace('active','done') ||
+        document.getElementById('pstep-' + stepIdx)?.classList.add('done');
+      stepIdx++;
+      const next = document.getElementById('pstep-' + stepIdx);
+      if (next) { next.classList.add('active'); }
+      document.getElementById('progressLabel').textContent = STEPS[stepIdx].toUpperCase();
+      document.getElementById('progressFill').style.width = ((stepIdx / STEPS.length) * 80) + '%';
+    }
+  }, 700);
+
+  try {
+    const res = await fetch(`${API}/reports/${reportId}/review`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authToken}` },
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Review failed to start');
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let charCount = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const text = decoder.decode(value);
+      const lines = text.split('\n');
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const evt = JSON.parse(line.slice(6));
+          if (evt.type === 'progress') {
+            charCount = evt.chars;
+            document.getElementById('liveOutput').innerHTML =
+              `<span style="color:var(--slate-light)">Processing AI response...</span><br>` +
+              `<span style="font-size:11px;">${charCount.toLocaleString()} characters analyzed</span>`;
+          } else if (evt.type === 'status') {
+            document.getElementById('progressLabel').textContent = evt.step.toUpperCase();
+          } else if (evt.type === 'complete') {
+            clearInterval(stepTimer);
+            STEPS.forEach((_,i) => { document.getElementById('pstep-'+i)?.classList.add('done'); });
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressLabel').textContent = 'REVIEW COMPLETE';
+            document.getElementById('liveOutput').innerHTML = '✓ Analysis complete. Loading results...';
+            await loadAndShowResults(reportId);
+            return;
+          } else if (evt.type === 'error') {
+            throw new Error(evt.message);
+          }
+        } catch(e) {
+          if (e.message && !e.message.includes('JSON')) throw e;
+        }
+      }
+    }
+  } catch(e) {
+    clearInterval(stepTimer);
+    document.getElementById('liveOutput').innerHTML =
+      `<div class="error-banner" style="margin:0;">${e.message}</div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function loadAndShowResults(reportId) {
+  currentReportId = reportId;
+  try {
+    const report = await apiFetch(`/reports/${reportId}`);
+    renderResults(report);
+    showSection('results');
+  } catch(e) {
+    document.getElementById('liveOutput').innerHTML = `<div class="error-banner" style="margin:0;">Failed to load results: ${e.message}</div>`;
+  }
+}
+
+function renderResults(report) {
+  currentIssues = report.issues || [];
+  currentSeverityFilter = 'all';
+  currentSectionFilter = 'all';
+
+  document.getElementById('resultTitle').textContent = report.property_address || 'Review Complete';
+  document.getElementById('resultSubtitle').textContent =
+    `${(report.property_type || 'Appraisal').replace('_',' ')} · Date of Value: ${report.date_of_value || 'N/A'} · Appraiser: ${report.appraiser_name || 'N/A'}`;
+
+  // Score ring
+  const score = report.score || 0;
+  document.getElementById('scoreNum').textContent = score;
+  const circ = 251;
+  const offset = circ - (score / 100) * circ;
+  const circle = document.getElementById('scoreCircle');
+  circle.setAttribute('stroke-dashoffset', offset);
+  circle.setAttribute('stroke', score >= 75 ? '#059669' : score >= 50 ? '#D97706' : '#C0392B');
+
+  const grade = report.grade || 'FAIL';
+  const gradeEl = document.getElementById('scoreGrade');
+  gradeEl.textContent = grade === 'PASS' ? 'Meets Standards' : grade === 'CONDITIONAL' ? 'Conditional Pass' : 'Review Required';
+  gradeEl.className = 'score-grade ' + (grade === 'PASS' ? 'pass' : grade === 'CONDITIONAL' ? 'warn' : 'fail');
+  document.getElementById('scoreDesc').textContent = report.score_description || '';
+
+  const critical = currentIssues.filter(i => i.severity === 'critical').length;
+  const major    = currentIssues.filter(i => i.severity === 'major').length;
+  const minor    = currentIssues.filter(i => i.severity !== 'critical' && i.severity !== 'major').length;
+  document.getElementById('cntCritical').textContent = critical;
+  document.getElementById('cntMajor').textContent = major;
+  document.getElementById('cntMinor').textContent = minor;
+
+  // Info grid
+  const infoItems = [
+    ['Property', report.property_address],
+    ['Type', report.property_type?.replace('_',' ')],
+    ['Date of Value', report.date_of_value],
+    ['Report Date', report.report_date],
+    ['Appraiser', report.appraiser_name],
+    ['Client', report.client_name],
+    ['Final Value', report.final_value ? '$' + Number(report.final_value).toLocaleString() : null],
+    ['Form', report.report_form],
+  ].filter(([,v]) => v);
+  document.getElementById('reportInfoGrid').innerHTML = infoItems.map(([l,v]) =>
+    `<div class="info-cell"><div class="info-cell-label">${l}</div><div class="info-cell-value">${v}</div></div>`
+  ).join('');
+
+  // Summary
+  document.getElementById('summaryContent').innerHTML =
+    (report.review_summary || '').split('\n\n').map(p => `<p style="margin-bottom:.75rem">${p}</p>`).join('');
+
+  // Math
+  renderMathTable(report.math_checks || []);
+
+  // Render issues
+  renderIssues();
+}
+
+function renderIssues() {
+  const filtered = currentIssues.filter(issue => {
+    const sevOk  = currentSeverityFilter === 'all' || issue.severity === currentSeverityFilter;
+    const secOk  = currentSectionFilter  === 'all' || issue.section  === currentSectionFilter;
+    return sevOk && secOk;
+  });
+
+  const list = document.getElementById('issuesList');
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state">No issues match the current filters.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map((issue, idx) => `
+    <div class="issue-item" id="issue-item-${idx}" onclick="toggleIssue(${idx})">
+      <div class="issue-header">
+        <span class="severity-badge sev-${issue.severity}">${issue.severity}</span>
+        <div class="issue-content">
+          <div class="issue-title">${escHtml(issue.issue_code)} — ${escHtml(issue.title)}</div>
+          <div class="issue-meta">${issue.section?.toUpperCase()} ${issue.location ? '· ' + escHtml(issue.location) : ''}</div>
+        </div>
+        <span class="issue-chevron">›</span>
+      </div>
+      <div class="issue-detail">
+        <div class="detail-section">
+          <div class="detail-label">Problem Identified</div>
+          <div class="detail-text">${escHtml(issue.problem)}</div>
+          ${issue.extracted_value ? `<div class="detail-code">Reported: ${escHtml(issue.extracted_value)}${issue.correct_value ? '\nShould be: ' + escHtml(issue.correct_value) : ''}</div>` : ''}
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">Underwriting Impact</div>
+          <div class="detail-text">${escHtml(issue.why_it_matters || '')}</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">Required Correction</div>
+          <div class="correction-box">${escHtml(issue.correction || '')}</div>
+        </div>
+        ${issue.rule_reference ? `<div class="detail-section"><div class="detail-label">Rule Reference</div><div class="detail-text" style="font-family:'IBM Plex Mono',monospace;font-size:12px;">${escHtml(issue.rule_reference)}</div></div>` : ''}
+        <div class="feedback-row">
+          <button class="fb-btn ${issue.feedback==='confirmed'?'confirmed':''}" onclick="submitFeedback(event,'${issue.id}','confirmed',${idx})">✓ Confirm</button>
+          <button class="fb-btn ${issue.feedback==='dismissed'?'dismissed':''}" onclick="submitFeedback(event,'${issue.id}','dismissed',${idx})">✗ Dismiss</button>
+          <button class="fb-btn ${issue.feedback==='corrected'?'corrected':''}" onclick="submitFeedback(event,'${issue.id}','corrected',${idx})" style="margin-left:auto;">Mark Corrected</button>
+        </div>
+        ${issue.feedback ? `<div style="font-size:11px;color:var(--slate-light);margin-top:6px;font-family:'IBM Plex Mono',monospace;">Feedback recorded: ${issue.feedback}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleIssue(idx) {
+  const el = document.getElementById('issue-item-' + idx);
+  if (!el) return;
+  el.classList.toggle('expanded');
+}
+
+function filterSeverity(sev, btn) {
+  currentSeverityFilter = sev;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderIssues();
+}
+
+function filterBySection(sec) {
+  currentSectionFilter = sec;
+  renderIssues();
+}
+
+async function submitFeedback(event, issueId, feedback, idx) {
+  event.stopPropagation();
+  try {
+    await apiFetch(`/issues/${issueId}/feedback`, 'PATCH', { feedback });
+    currentIssues = currentIssues.map((iss, i) => i === idx ? {...iss, feedback} : iss);
+    // Find in full list too
+    renderIssues();
+  } catch(e) { console.error('Feedback failed:', e); }
+}
+
+function renderMathTable(checks) {
+  const el = document.getElementById('mathContent');
+  if (!checks.length) {
+    el.innerHTML = '<div class="empty-state">No mathematical checks extracted.</div>';
+    return;
+  }
+  el.innerHTML = `<table class="math-table">
+    <thead><tr>
+      <th>Item</th><th>Reported</th><th>Calculated</th><th>Variance</th><th>Status</th>
+    </tr></thead>
+    <tbody>${checks.map((c,i) => `
+      <tr>
+        <td style="color:var(--slate)">${escHtml(c.item)}</td>
+        <td>${escHtml(c.reported_value||'—')}</td>
+        <td>${escHtml(c.calculated_value||'—')}</td>
+        <td style="color:${c.is_match?'var(--green-flag)':'var(--red-flag)'}">${escHtml(c.variance||'—')}</td>
+        <td style="text-align:center">${c.is_match
+          ? '<span style="color:var(--green-flag);font-weight:500;">✓ Match</span>'
+          : '<span style="color:var(--red-flag);font-weight:500;">✗ Error</span>'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function loadAuditLog(reportId) {
+  try {
+    const logs = await apiFetch(`/reports/${reportId}/audit`);
+    const el = document.getElementById('auditContent');
+    if (!logs.length) { el.innerHTML = '<div class="empty-state">No audit entries.</div>'; return; }
+    el.innerHTML = logs.map(l => `
+      <div class="audit-row">
+        <span class="audit-time">${new Date(l.created_at).toLocaleTimeString()}</span>
+        <span class="audit-event">${escHtml(l.event)}</span>
+        <span class="audit-rule">${escHtml(l.rule_ref||'')}</span>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+function switchResultTab(name, el) {
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['issues','summary','math','audit'].forEach(t => {
+    document.getElementById('rtab-'+t).style.display = t === name ? '' : 'none';
+  });
+  if (name === 'audit' && currentReportId) loadAuditLog(currentReportId);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REPORTS LIST
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function loadReportsList() {
+  try {
+    const reports = await apiFetch('/reports?limit=50');
+    const el = document.getElementById('reportsList');
+    if (!reports.length) {
+      el.innerHTML = '<div class="empty-state">No reviews yet.</div>';
+      return;
+    }
+    el.innerHTML = reports.map(r => reportRowHTML(r)).join('');
+  } catch(e) { console.error(e); }
+}
+
+function reportRowHTML(r) {
+  const scoreColor = r.score == null ? 'var(--slate-light)' : r.score >= 75 ? 'var(--green-flag)' : r.score >= 50 ? 'var(--amber-flag)' : 'var(--red-flag)';
+  const statusClass = { complete:'status-complete', processing:'status-processing', queued:'status-queued', failed:'status-failed', uploaded:'status-queued' }[r.status] || 'status-queued';
+  return `<div class="report-row" onclick="openReport('${r.id}')">
+    <div class="report-row-info">
+      <div class="report-row-title">${escHtml(r.property_address || r.original_filename)}</div>
+      <div class="report-row-meta">${escHtml(r.original_filename)} · ${new Date(r.created_at).toLocaleDateString()}
+        ${r.critical_count ? ` · <span style="color:var(--red-flag);">${r.critical_count} critical</span>` : ''}
+        ${r.major_count ? ` · <span style="color:var(--amber-flag);">${r.major_count} major</span>` : ''}
+      </div>
+    </div>
+    <span class="status-pill ${statusClass}">${r.status}</span>
+    <div class="report-row-score" style="color:${scoreColor}">${r.score ?? '—'}</div>
+  </div>`;
+}
+
+async function openReport(reportId) {
+  currentReportId = reportId;
+  try {
+    const report = await apiFetch(`/reports/${reportId}`);
+    if (report.status === 'complete') {
+      renderResults(report);
+      showSection('results');
+    } else if (report.status === 'processing' || report.status === 'queued') {
+      startReviewStream(reportId, report.original_filename);
+    } else {
+      renderResults(report);
+      showSection('results');
+    }
+  } catch(e) { alert('Failed to load report: ' + e.message); }
+}
+
+async function rerunReview() {
+  if (!currentReportId) return;
+  if (!confirm('Re-run the AI review for this report? This will replace existing results.')) return;
+  const report = await apiFetch(`/reports/${currentReportId}`);
+  startReviewStream(currentReportId, report.original_filename);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════════════════════════════════════
+
+function exportTxt() {
+  const title = document.getElementById('resultTitle').textContent;
+  const grade = document.getElementById('scoreGrade').textContent;
+  const score = document.getElementById('scoreNum').textContent;
+  const lines = [
+    `APPRAISALIQ REVIEW REPORT`,
+    '='.repeat(60),
+    `Property: ${title}`,
+    `Score: ${score}/100  |  Grade: ${grade}`,
+    `Generated: ${new Date().toLocaleString()}`,
+    '',
+    'FLAGGED ISSUES',
+    '='.repeat(60),
+    '',
+  ];
+  currentIssues.forEach((iss, i) => {
+    lines.push(`[${iss.severity.toUpperCase()}] ${iss.issue_code} — ${iss.title}`);
+    lines.push(`Section: ${iss.section} | ${iss.location || ''}`);
+    lines.push(`Problem: ${iss.problem}`);
+    lines.push(`Impact: ${iss.why_it_matters || ''}`);
+    lines.push(`Correction: ${iss.correction || ''}`);
+    lines.push(`Rule: ${iss.rule_reference || 'N/A'}`);
+    lines.push('');
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `appraisaliq_review_${Date.now()}.txt`;
+  a.click();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SAMPLE REPORT
+// ══════════════════════════════════════════════════════════════════════════════
+
+function loadSample() {
+  document.getElementById('pastedText').value = `COMMERCIAL APPRAISAL REPORT
+Property: 4521 Industrial Parkway, Commerce City, CO 80022
+Client: First National Commercial Bank
+Date of Value: October 15, 2024
+Report Date: November 1, 2024
+Appraiser: John R. Mitchell, MAI, SRA
+License: CO-CG-1001234
+
+PROPERTY DESCRIPTION
+The subject property is a 28,500 square foot industrial warehouse/distribution facility constructed in 1998. The building features 24-foot clear height, four dock-high loading doors, one grade-level door, and 120 parking spaces. Site area is 3.2 acres or 139,392 SF. Zoned I-1, Light Industrial.
+
+HIGHEST AND BEST USE
+As Vacant: Industrial development. As Improved: Continued use as industrial warehouse.
+
+SALES COMPARISON APPROACH
+Comparable 1: 3800 Peoria Street, Denver — 22,000 SF — Sold: $3,100,000 — $140.91/SF — June 2024
+Comparable 2: 5200 Havana Street, Commerce City — 31,500 SF — Sold: $4,200,000 — $133.33/SF — March 2024
+Comparable 3: 2100 Airport Blvd, Aurora — 19,800 SF — Sold: $2,950,000 — $148.99/SF — January 2024
+
+Adjustments — Comparable 1: Location -5% (-$7.05/SF), Size +3% (+$4.23/SF), Clear Height -2% (-$2.82/SF)
+Net Adjusted: $135.27/SF × 28,500 = $3,855,195
+
+Adjustments — Comparable 2: Location +2% (+$2.67/SF), Size -2% (-$2.67/SF), Condition +5% (+$6.67/SF)
+Net Adjusted: $140.00/SF × 28,500 = $3,990,000
+
+Adjustments — Comparable 3: Location -3% (-$4.47/SF), Size +5% (+$7.45/SF), Age +2% (+$2.98/SF)
+Net Adjusted: $155.95/SF × 28,500 = $4,444,575
+
+INCOME APPROACH
+Market Rent: $9.50/SF NNN
+Potential Gross Income: $9.50 × 28,500 = $270,750
+Vacancy 5%: $13,537
+Effective Gross Income: $257,213
+Operating Expenses: $18,500
+Net Operating Income: $238,713
+Cap Rate: 6.25%
+Value: $238,713 / 0.0625 = $3,819,408
+
+RECONCILIATION
+Sales Comparison: $3,855,195 to $4,444,575
+Income Approach: $3,819,408
+Final Value: $4,100,000
+
+CERTIFICATION
+I certify that the statements in this report are true and correct to the best of my knowledge.`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// API HELPER
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function apiFetch(path, method = 'GET', body = null, auth = true) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth && authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  if (res.status === 401) { doLogout(); throw new Error('Session expired. Please sign in again.'); }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Request failed' }));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
