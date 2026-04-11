@@ -551,7 +551,7 @@ hr { border: none; border-top: 1px solid var(--cream-dark); margin: 1.5rem 0; }
 
 const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:8000/api/v1'
-  : '/api/v1';
+  : 'https://animated-space-computing-machine-pwr9ww4xxw5hr5v-8000.app.github.dev/api/v1';
 
 let authToken = localStorage.getItem('aiq_token');
 let currentUser = JSON.parse(localStorage.getItem('aiq_user') || 'null');

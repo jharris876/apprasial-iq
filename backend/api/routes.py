@@ -177,7 +177,7 @@ async def upload_report(
         user_id    = user.id,
         event      = f"Report uploaded: {original_filename}",
         rule_ref   = "UPLOAD",
-        ip_address = str(request.client.host) if request.client else None,
+        ip_address = None,
     ))
 
     return {"report_id": str(report.id), "status": "queued"}
@@ -288,10 +288,26 @@ async def get_report(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    report = await db.get(Report, report_id)
+    result = await db.execute(select(Report).where(Report.id == report_id))
+    report = result.scalar_one_or_none()
     if not report or report.user_id != user.id:
         raise HTTPException(status_code=404, detail="Report not found")
-    return report
+
+    issues_result = await db.execute(
+        select(Issue).where(Issue.report_id == report_id).order_by(Issue.sort_order)
+    )
+    issues = issues_result.scalars().all()
+
+    math_result = await db.execute(
+        select(MathCheck).where(MathCheck.report_id == report_id).order_by(MathCheck.sort_order)
+    )
+    math_checks = math_result.scalars().all()
+
+    return ReportDetail(
+        **{c.name: getattr(report, c.name) for c in Report.__table__.columns},
+        issues=[IssueOut.model_validate(i) for i in issues],
+        math_checks=[MathCheckOut.model_validate(m) for m in math_checks],
+    )
 
 
 @router.get("/reports/{report_id}/status", response_model=ReportStatusOut, tags=["Reports"])

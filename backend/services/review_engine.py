@@ -23,7 +23,9 @@ from db.models import (
 
 logger = structlog.get_logger()
 
-client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+def get_client():
+    import os
+    return anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
 
 SYSTEM_PROMPT = """You are a senior certified commercial appraisal reviewer with 25 years of experience reviewing appraisals for secondary market delivery. You enforce USPAP 2024, Fannie Mae Selling Guide (B4-1), and Freddie Mac requirements with the precision of a bank chief appraiser.
 
@@ -132,7 +134,7 @@ async def run_review_streaming(
 
     full_text = ""
     try:
-        async with client.messages.stream(
+        async with get_client().messages.stream(
             model=settings.AI_MODEL,
             max_tokens=settings.AI_MAX_TOKENS,
             system=SYSTEM_PROMPT,
@@ -157,8 +159,10 @@ async def run_review_streaming(
     # Parse JSON
     yield f"data: {json.dumps({'type': 'status', 'step': 'Parsing review results'})}\n\n"
     try:
-        clean = re.sub(r"```json\s*|\s*```", "", full_text).strip()
-        # Handle cases where model wraps in extra text
+        # Strip markdown code blocks
+        clean = re.sub(r"```json\s*", "", full_text)
+        clean = re.sub(r"```\s*", "", clean).strip()
+        # Extract just the JSON object
         json_start = clean.find("{")
         json_end = clean.rfind("}") + 1
         if json_start >= 0 and json_end > json_start:
@@ -201,7 +205,8 @@ async def _persist_results(db: AsyncSession, report: Report, data: dict, raw_tex
     report.client_name       = meta.get("client_name")
     report.intended_use      = meta.get("intended_use")
     report.report_form       = meta.get("report_form")
-    report.score             = data.get("score")
+    score_val = data.get("score")
+    report.score             = int(score_val) if score_val is not None and str(score_val).isdigit() else None
     report.grade             = data.get("grade")
     report.score_description = data.get("score_description")
     report.review_summary    = data.get("summary")
@@ -234,10 +239,9 @@ async def _persist_results(db: AsyncSession, report: Report, data: dict, raw_tex
             pass
 
     # Clear old issues / math checks (re-review scenario)
-    for issue in report.issues:
-        await db.delete(issue)
-    for mc in report.math_checks:
-        await db.delete(mc)
+    from sqlalchemy import delete as sql_delete
+    await db.execute(sql_delete(Issue).where(Issue.report_id == report.id))
+    await db.execute(sql_delete(MathCheck).where(MathCheck.report_id == report.id))
     await db.flush()
 
     # Insert issues

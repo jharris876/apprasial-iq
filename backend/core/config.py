@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
 
     # CORS
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8080"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://localhost:5500,https://animated-space-computing-machine-pwr9ww4xxw5hr5v-5500.app.github.dev"
 
     @property
     def cors_origins_list(self) -> List[str]:

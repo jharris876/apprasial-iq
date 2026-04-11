@@ -132,8 +132,8 @@ class Report(Base):
     updated_at:          Mapped[datetime]       = mapped_column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
 
     user:        "User"             = relationship("User", back_populates="reports")
-    issues:      "list[Issue]"      = relationship("Issue", back_populates="report", cascade="all, delete-orphan", order_by="Issue.sort_order")
-    math_checks: "list[MathCheck]"  = relationship("MathCheck", back_populates="report", cascade="all, delete-orphan", order_by="MathCheck.sort_order")
+    issues:      "list[Issue]"      = relationship("Issue", back_populates="report", cascade="all, delete-orphan", order_by="Issue.sort_order", uselist=True)
+    math_checks: "list[MathCheck]"  = relationship("MathCheck", back_populates="report", cascade="all, delete-orphan", order_by="MathCheck.sort_order", uselist=True)
     revisions:   "list[ReportRevision]" = relationship("ReportRevision", back_populates="report", cascade="all, delete-orphan")
 
 
@@ -197,7 +197,7 @@ class AuditLog(Base):
     event:      Mapped[str]            = mapped_column(Text, nullable=False)
     rule_ref:   Mapped[str | None]     = mapped_column(String)
     meta_data:  Mapped[dict | None]    = mapped_column(JSONB)
-    ip_address: Mapped[str | None]     = mapped_column(String)
+    ip_address: Mapped[str | None]     = mapped_column(Text)
     created_at: Mapped[datetime]       = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
 
