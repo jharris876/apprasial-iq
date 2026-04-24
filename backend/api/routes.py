@@ -26,12 +26,13 @@ from core.auth import (
 from db.database import get_db, check_db_connection
 from db.models import (
     User, Report, Issue, MathCheck, AuditLog, ReportRevision,
-    ReportStatus, FeedbackType
+    ReportStatus, FeedbackType, ReferenceReport
 )
 from api.schemas import (
     UserRegister, UserLogin, TokenResponse, UserOut,
     ReportDetail, ReportListItem, ReportStatusOut,
-    IssueOut, MathCheckOut, IssueFeedback, AuditLogOut, HealthResponse
+    IssueOut, MathCheckOut, IssueFeedback, AuditLogOut, HealthResponse,
+    ReferenceReportCreate, ReferenceReportOut,
 )
 from services.extractor import extract_text_from_bytes
 from services.review_engine import run_review_streaming
@@ -258,6 +259,29 @@ async def start_review(
     if not settings.ANTHROPIC_API_KEY:
         raise HTTPException(status_code=503, detail="Anthropic API key not configured on server")
 
+    # Fetch up to 3 active reference reports matching this property type
+    ref_stmt = (
+        select(ReferenceReport)
+        .where(
+            ReferenceReport.is_active == True,
+            ReferenceReport.property_type == (report.report_type or "commercial"),
+        )
+        .order_by(desc(ReferenceReport.created_at))
+        .limit(3)
+    )
+    ref_rows = (await db.execute(ref_stmt)).scalars().all()
+    reference_examples = [
+        {
+            "name": r.name,
+            "property_type": r.property_type,
+            "approved_by": r.approved_by,
+            "text": r.report_text,
+            "file_path": r.file_path,
+            "file_mime_type": r.file_mime_type,
+        }
+        for r in ref_rows
+    ] or None
+
     async def event_stream():
         async for chunk in run_review_streaming(
             report_id=report.id,
@@ -265,6 +289,8 @@ async def start_review(
             report_type=report.report_type or "commercial",
             review_standard=report.review_standard or "all",
             db=db,
+            reference_examples=reference_examples,
+            report_file_path=report.file_path,
         ):
             yield chunk
 
@@ -430,3 +456,86 @@ async def admin_stats(
         "avg_score": round(float(avg_score), 1) if avg_score else None,
         "math_errors_found": math_errors,
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# REFERENCE REPORTS — Bank-approved example reports for AI context
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/reference-reports/upload", response_model=ReferenceReportOut, tags=["Reference Reports"])
+async def upload_reference_report(
+    file: Optional[UploadFile] = File(None),
+    report_text: Optional[str] = Form(None),
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    property_type: str = Form("commercial"),
+    approved_by: Optional[str] = Form(None),
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    """Upload a bank-approved reference report (admin only). Used to give the AI examples of perfect reports."""
+    if not file and not report_text:
+        raise HTTPException(status_code=400, detail="Must provide file or report_text")
+
+    extracted_text = report_text or ""
+    saved_file_path = None
+    mime_type = "text/plain"
+    if file:
+        content = await file.read()
+        if len(content) > settings.max_file_size_bytes:
+            raise HTTPException(status_code=413, detail=f"File exceeds {settings.MAX_FILE_SIZE_MB}MB limit")
+        mime_type = file.content_type or "application/octet-stream"
+        extracted_text = extract_text_from_bytes(content, mime_type, file.filename or "upload")
+        # Save raw file so the AI can read it with full vision
+        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+        safe_name = f"ref_{uuid.uuid4()}_{file.filename or 'upload'}"
+        saved_file_path = str(Path(settings.UPLOAD_DIR) / safe_name)
+        async with aiofiles.open(saved_file_path, "wb") as fh:
+            await fh.write(content)
+
+    if not extracted_text or len(extracted_text.strip()) < 50:
+        raise HTTPException(status_code=422, detail="Could not extract meaningful text from the provided content.")
+
+    valid_types = {"commercial", "residential", "multifamily", "land", "industrial", "retail", "office", "mixed_use"}
+    ref = ReferenceReport(
+        name=name,
+        description=description,
+        property_type=property_type if property_type in valid_types else "commercial",
+        report_text=extracted_text,
+        file_path=saved_file_path,
+        file_mime_type=mime_type,
+        approved_by=approved_by,
+        uploaded_by=admin.id,
+    )
+    db.add(ref)
+    await db.flush()
+    return ref
+
+
+@router.get("/reference-reports", response_model=List[ReferenceReportOut], tags=["Reference Reports"])
+async def list_reference_reports(
+    property_type: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """List all active reference reports, optionally filtered by property type."""
+    stmt = select(ReferenceReport).where(ReferenceReport.is_active == True)
+    if property_type:
+        stmt = stmt.where(ReferenceReport.property_type == property_type)
+    stmt = stmt.order_by(desc(ReferenceReport.created_at))
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+@router.delete("/reference-reports/{ref_id}", tags=["Reference Reports"])
+async def delete_reference_report(
+    ref_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    """Deactivate a reference report (admin only)."""
+    ref = await db.get(ReferenceReport, ref_id)
+    if not ref:
+        raise HTTPException(status_code=404, detail="Reference report not found")
+    ref.is_active = False
+    return {"deleted": True, "id": str(ref_id)}

@@ -217,6 +217,22 @@ class ReportRevision(Base):
     report: "Report" = relationship("Report", back_populates="revisions")
 
 
+class ReferenceReport(Base):
+    __tablename__ = "reference_reports"
+
+    id:             Mapped[uuid.UUID]      = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name:           Mapped[str]            = mapped_column(String, nullable=False)
+    description:    Mapped[str | None]     = mapped_column(Text)
+    property_type:  Mapped[str | None]     = mapped_column(SAEnum(AppraisalType, name="appraisal_type"))
+    report_text:    Mapped[str]            = mapped_column(Text, nullable=False)
+    file_path:      Mapped[str | None]     = mapped_column(String)
+    file_mime_type: Mapped[str | None]     = mapped_column(String)
+    approved_by:    Mapped[str | None]     = mapped_column(String)
+    uploaded_by:    Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    is_active:      Mapped[bool]           = mapped_column(Boolean, default=True)
+    created_at:     Mapped[datetime]       = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+
 class ApiKey(Base):
     __tablename__ = "api_keys"
 

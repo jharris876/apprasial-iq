@@ -346,6 +346,14 @@ hr { border: none; border-top: 1px solid var(--cream-dark); margin: 1.5rem 0; }
         <div class="sidebar-item" style="font-size:11px; color: var(--gold-light); cursor:default;">✓ Fannie Mae B4-1</div>
         <div class="sidebar-item" style="font-size:11px; color: var(--gold-light); cursor:default;">✓ Freddie Mac 5601</div>
       </div>
+      <div class="sidebar-divider" id="adminDivider" style="display:none;"></div>
+      <div class="sidebar-section" id="adminSection" style="display:none;">
+        <div class="sidebar-label">Admin</div>
+        <div class="sidebar-item" onclick="showSection('ref-reports')">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h10v10H2z"/><path d="M5 7h4M7 5v4"/></svg>
+          Reference Reports
+        </div>
+      </div>
     </aside>
 
     <main class="main">
@@ -540,6 +548,60 @@ hr { border: none; border-top: 1px solid var(--cream-dark); margin: 1.5rem 0; }
         <div id="reportsList"></div>
       </div>
 
+      <!-- REFERENCE REPORTS (admin only) -->
+      <div id="section-ref-reports" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+          <div>
+            <p class="page-title">Reference Reports</p>
+            <p class="page-subtitle" style="margin:0;">Bank-approved appraisals used to teach the AI what a perfect report looks like. Upload PDFs — the AI will see all charts, tables, and graphics.</p>
+          </div>
+        </div>
+
+        <div id="refReportError" class="error-banner" style="display:none;"></div>
+        <div id="refReportSuccess" style="display:none; background:var(--green-pale); color:var(--green-flag); border:1px solid var(--green-flag); padding:10px 14px; font-size:13px; margin-bottom:1rem;"></div>
+
+        <div class="card" style="margin-bottom:1.5rem;">
+          <div class="card-title">Upload Approved Reference Report</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div>
+              <label style="font-size:12px; color:var(--slate-light); display:block; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">Report Name *</label>
+              <input type="text" id="refName" placeholder="e.g. First Vision Bank - Lebanon TN Commercial" class="text-input" style="margin:0; padding:8px 12px; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:var(--slate-light); display:block; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">Approved By (Bank)</label>
+              <input type="text" id="refApprovedBy" placeholder="e.g. First Vision Bank" class="text-input" style="margin:0; padding:8px 12px; font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:var(--slate-light); display:block; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">Property Type</label>
+              <select id="refPropertyType" class="text-input" style="margin:0; padding:8px 12px; font-size:13px;">
+                <option value="commercial">Commercial</option>
+                <option value="residential">Residential</option>
+                <option value="multifamily">Multi-Family</option>
+                <option value="land">Land / Vacant</option>
+                <option value="industrial">Industrial</option>
+                <option value="retail">Retail</option>
+                <option value="office">Office</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px; color:var(--slate-light); display:block; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">Description (optional)</label>
+              <input type="text" id="refDescription" placeholder="Brief description of the report" class="text-input" style="margin:0; padding:8px 12px; font-size:13px;">
+            </div>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label style="font-size:12px; color:var(--slate-light); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">PDF or DOCX File *</label>
+            <input type="file" id="refFileInput" accept=".pdf,.docx" style="display:block; font-size:13px; color:var(--navy); padding:8px 0;">
+            <p style="font-size:11px; color:var(--slate-light); margin-top:4px;">Upload the original PDF — the AI will read it with full visual understanding including charts, tables, and photos.</p>
+          </div>
+          <button type="button" class="btn-primary" onclick="uploadRefReport()" id="refUploadBtn">Upload Reference Report</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Existing Reference Reports</div>
+          <div id="refReportsList"><div class="empty-state" style="padding:2rem 0;">No reference reports uploaded yet.</div></div>
+        </div>
+      </div>
+
     </main>
   </div>
 </div>
@@ -580,6 +642,10 @@ function showApp() {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = '';
   document.getElementById('headerUserName').textContent = currentUser.full_name;
+  if (currentUser.is_admin) {
+    document.getElementById('adminSection').style.display = '';
+    document.getElementById('adminDivider').style.display = '';
+  }
   loadDashboard();
 }
 
@@ -657,6 +723,100 @@ function showSection(name) {
   document.getElementById('sidebarSectionNav').style.display = name === 'results' ? '' : 'none';
   if (name === 'reports') loadReportsList();
   if (name === 'dashboard') loadDashboard();
+  if (name === 'ref-reports') loadRefReports();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REFERENCE REPORTS
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function loadRefReports() {
+  const list = document.getElementById('refReportsList');
+  try {
+    const data = await apiFetch('/reference-reports');
+    if (!data.length) {
+      list.innerHTML = '<div class="empty-state" style="padding:2rem 0;">No reference reports uploaded yet.</div>';
+      return;
+    }
+    list.innerHTML = data.map(r => `
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:0.5px solid var(--border);">
+        <div>
+          <div style="font-size:13px; font-weight:500;">${escHtml(r.name)}</div>
+          <div style="font-size:11px; color:var(--slate-light); margin-top:2px; font-family:'IBM Plex Mono',monospace;">
+            ${r.property_type || '—'} ${r.approved_by ? '· Approved by ' + escHtml(r.approved_by) : ''} · ${new Date(r.created_at).toLocaleDateString()}
+          </div>
+        </div>
+        <button class="btn-secondary btn-sm" onclick="deleteRefReport('${r.id}')">Remove</button>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = `<div style="color:var(--red-flag); font-size:13px;">${escHtml(e.message)}</div>`;
+  }
+}
+
+async function uploadRefReport() {
+  const name = document.getElementById('refName').value.trim();
+  const file = document.getElementById('refFileInput').files[0];
+  const errEl = document.getElementById('refReportError');
+  const okEl = document.getElementById('refReportSuccess');
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+
+  if (!name) { errEl.textContent = 'Report name is required.'; errEl.style.display = 'block'; return; }
+  if (!file) { errEl.textContent = 'Please select a PDF or DOCX file.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('refUploadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('name', name);
+    fd.append('property_type', document.getElementById('refPropertyType').value);
+    fd.append('approved_by', document.getElementById('refApprovedBy').value.trim());
+    fd.append('description', document.getElementById('refDescription').value.trim());
+
+    const res = await fetch(API + '/reference-reports/upload', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authToken}` },
+      body: fd
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Upload failed' }));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    document.getElementById('refName').value = '';
+    document.getElementById('refApprovedBy').value = '';
+    document.getElementById('refDescription').value = '';
+    document.getElementById('refFileInput').value = '';
+    await loadRefReports();
+    // Re-assert the section and show success after list reloads so nothing can navigate away
+    showSection('ref-reports');
+    okEl.textContent = `"${name}" uploaded successfully. The AI will use it as context on future reviews.`;
+    okEl.style.display = 'block';
+    setTimeout(() => { okEl.style.display = 'none'; }, 8000);
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Upload Reference Report';
+  }
+}
+
+async function deleteRefReport(id) {
+  if (!confirm('Remove this reference report? The AI will no longer use it.')) return;
+  try {
+    const res = await fetch(API + '/reference-reports/' + id, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) throw new Error('Delete failed');
+    await loadRefReports();
+  } catch(e) {
+    alert(e.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

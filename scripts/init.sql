@@ -255,6 +255,27 @@ CREATE TABLE report_revisions (
 CREATE INDEX idx_revisions_report_id ON report_revisions(report_id);
 
 -- =============================================================================
+-- REFERENCE REPORTS  (bank-approved example reports used as AI context)
+-- =============================================================================
+
+CREATE TABLE reference_reports (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name            TEXT NOT NULL,
+    description     TEXT,
+    property_type   appraisal_type,
+    report_text     TEXT NOT NULL,
+    file_path       TEXT,
+    file_mime_type  TEXT,
+    approved_by     TEXT,
+    uploaded_by     UUID REFERENCES users(id) ON DELETE SET NULL,
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_reference_reports_type     ON reference_reports(property_type);
+CREATE INDEX idx_reference_reports_active   ON reference_reports(is_active) WHERE is_active = TRUE;
+
+-- =============================================================================
 -- API KEYS  (for programmatic / lender integrations)
 -- =============================================================================
 

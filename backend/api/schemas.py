@@ -163,6 +163,27 @@ class AuditLogOut(BaseModel):
         from_attributes = True
 
 
+# ── Reference Reports ──────────────────────────────────────────────────────────
+
+class ReferenceReportCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=200)
+    description: Optional[str] = None
+    property_type: Optional[str] = "commercial"
+    approved_by: Optional[str] = None
+
+class ReferenceReportOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: Optional[str]
+    property_type: Optional[str]
+    approved_by: Optional[str]
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # ── Health ─────────────────────────────────────────────────────────────────────
 
 class HealthResponse(BaseModel):
